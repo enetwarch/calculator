@@ -54,7 +54,9 @@ body {
     font-size: 3rem;
     grid-column: 1 / 5;
     justify-content: flex-end;
+    overflow: hidden;
     padding: 0 1.5rem;
+    text-wrap: nowrap;
 }
 
 .calculator .input {
