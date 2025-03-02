@@ -38,7 +38,7 @@ body {
     border-radius: 2rem;
     display: grid;
     gap: 1rem;
-    grid-template: 6rem repeat(5, 4rem) / repeat(4, 4rem);
+    grid-template: 7rem repeat(5, 4rem) / repeat(4, 4rem);
     padding: 2rem;
 }
 
@@ -54,6 +54,7 @@ body {
     font-size: 3rem;
     grid-column: 1 / 5;
     justify-content: flex-end;
+    margin-bottom: 1rem;
     overflow: hidden;
     padding: 0 1.5rem;
     text-wrap: nowrap;
@@ -61,6 +62,8 @@ body {
 
 .calculator .input {
     align-items: center;
+    background-color: var(--black-3);
+    color: var(--white);
     display: flex;
     font-size: 2rem;
     justify-content: center;
@@ -70,14 +73,9 @@ body {
     cursor: pointer;
 }
 
-.calculator .number.input {
-    background-color: var(--black-3);
-    color: var(--white);
-}
-
 .calculator .operation.input {
-    background-color: var(--black-3);
-    color: var(--red);
+    background-color: var(--red);
+    color: var(--black-2);
 }
 
 .calculator #equals.operation.input {
@@ -86,6 +84,6 @@ body {
     grid-area: 5 / 4 / 7 / 4;
 }
 
-.calculator #zero.number.input {
+.calculator #zero.input {
     grid-column: 1 / 3;
 }
