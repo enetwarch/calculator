@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+
+:root {
+    --black-1: #1a1a1a;
+    --black-2: #333333;
+    --black-3: #4d4d4d;
+    --blue: #608cab;
+    --green: #72a079;
+    --red: #bb4948;
+    --white: #e6e6e6;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+    font-family: "Varela Round", sans-serif;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+html {
+    font-size: clamp(8px, 2vw, 16px);
+}
+
+body {
+    align-items: center;
+    background-color: var(--black-1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.calculator {
+    background-color: var(--black-2);
+    border-radius: 2rem;
+    display: grid;
+    gap: 1.5rem;
+    grid-template: 6rem repeat(5, 4rem) / repeat(4, 4rem);
+    padding: 1.5rem;
+}
+
+.calculator > * {
+    border-radius: 1rem;
+}
+
+.calculator #output {
+    align-items: center;
+    background-color: var(--green);
+    color: var(--black-2);
+    display: flex;
+    font-size: 3rem;
+    grid-column: 1 / 5;
+    justify-content: flex-end;
+    padding: 0 1.5rem;
+}
+
+.calculator .input {
+    align-items: center;
+    display: flex;
+    font-size: 2rem;
+    justify-content: center;
+}
+
+.calculator .input:hover {
+    cursor: pointer;
+}
+
+.calculator .number.input {
+    background-color: var(--black-3);
+    color: var(--white);
+}
+
+.calculator .operation.input {
+    background-color: var(--black-3);
+    color: var(--red);
+}
+
+.calculator #equals.operation.input {
+    background-color: var(--blue);
+    color: var(--black-2);
+    grid-area: 5 / 4 / 7 / 4;
+}
+
+.calculator #zero.number.input {
+    grid-column: 1 / 3;
+}
