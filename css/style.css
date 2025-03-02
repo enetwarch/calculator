@@ -37,9 +37,9 @@ body {
     background-color: var(--black-2);
     border-radius: 2rem;
     display: grid;
-    gap: 1.5rem;
+    gap: 1rem;
     grid-template: 6rem repeat(5, 4rem) / repeat(4, 4rem);
-    padding: 1.5rem;
+    padding: 2rem;
 }
 
 .calculator > * {
