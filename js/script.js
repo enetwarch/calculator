@@ -57,7 +57,8 @@ let y;
 
 function enterNumberInput(input) {
     const recentEntry = outputElement.innerText;
-    const recentEntryChar = recentEntry.charAt(recentEntry.length - 1);
+    const recentEntryIndex = recentEntry.length - 1
+    const recentEntryChar = recentEntry.charAt(recentEntryIndex);
     const updatedEntry = recentEntry + input;
     if (input === ".") {
         if (recentEntryChar === input) return;
@@ -82,7 +83,8 @@ function enterNumberInput(input) {
 
 function enterOperationInput(input) {
     const recentEntry = outputElement.innerText;
-    const recentEntryChar = recentEntry.charAt(recentEntry.length - 1);
+    const recentEntryIndex = recentEntry.length - 1;
+    const recentEntryChar = recentEntry.charAt(recentEntryIndex);
     if (input === recentEntryChar) return;
     const recentEntryIsEmpty = recentEntryChar === "";
     const recentEntryIsOperator = operators.includes(recentEntryChar);
@@ -100,14 +102,23 @@ function enterOperationInput(input) {
 }
 
 function displayOutput() {
+    if (y === undefined) return;
     if (operator !== undefined) {
         x = parseFloat(x);
         y = parseFloat(y);
         const operation = operations[operator];
-        const result = `${operation(x, y)}`;
-        x = result;
+        const result = operation(x, y);
+        let formattedResult;
+        if (result === result.toFixed()) {
+            formattedResult = result.toFixed();
+        } else if (result === result.toFixed(1)) {
+            formattedResult = result.toFixed(1);
+        } else {
+            formattedResult = result.toFixed(2);
+        }
+        x = formattedResult;
         y = operator = undefined;
-        outputElement.innerText = result;
+        outputElement.innerText = formattedResult;
     }
 }
 
@@ -115,15 +126,16 @@ function clearEntry() {
     const recentEntry = outputElement.innerText;
     if (recentEntry.length !== 0) {
         const recentEntryIndex = recentEntry.length - 1;
+        const recentEntryChar = recentEntry.charAt(recentEntryIndex);
         const updatedOutput = recentEntry.substring(0, recentEntryIndex);
-        if (operator === undefined) {
+        if (recentEntryChar === operator) {
+            operator = undefined;
+        } else if (operator === undefined) {
             x = updatedOutput;
         } else if (operator !== undefined) {
             const variables = recentEntry.split(operator);
             const lastVariable = variables[variables.length - 1];
             y = lastVariable;
-        } else {
-            operator = undefined;
         }
         outputElement.innerText = updatedOutput;
     }
