@@ -64,6 +64,11 @@ function enterNumberInput(input) {
         const recentEntryIsEmpty = recentEntryChar === "";
         const recentEntryIsOperator = operators.includes(recentEntryChar);
         if (recentEntryIsEmpty || recentEntryIsOperator) return;
+        if (operator === undefined) {
+            if (x.includes(input)) return;
+        } else {
+            if (y.includes(input)) return;
+        }
     }
     if (operator === undefined) {
         x = updatedEntry;
