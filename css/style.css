@@ -62,8 +62,6 @@ body {
 
 .calculator .input {
     align-items: center;
-    background-color: var(--black-3);
-    color: var(--white);
     display: flex;
     font-size: 2rem;
     justify-content: center;
@@ -73,14 +71,21 @@ body {
     cursor: pointer;
 }
 
-.calculator .operation.input {
+.calculator .operation.delete.input {
     background-color: var(--red);
+}
+
+.calculator .operation.input {
+    background-color: var(--blue);
     color: var(--black-2);
 }
 
+.calculator .number.input {
+    background-color: var(--black-3);
+    color: var(--white);
+}
+
 .calculator #equals.operation.input {
-    background-color: var(--blue);
-    color: var(--black-2);
     grid-area: 5 / 4 / 7 / 4;
 }
 
