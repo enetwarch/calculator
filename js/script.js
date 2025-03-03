@@ -42,7 +42,7 @@ function addListeners() {
     });
 }
 
-const output = document.getElementById("output");
+const outputElement = document.getElementById("output");
 const operators = ["+", "-", "×", "÷"];
 const operations = {
     "+": (x, y) => x + y,
@@ -51,14 +51,14 @@ const operations = {
     "÷": (x, y) => x / y
 };
 
-let x = undefined;
-let y = undefined;
-let operator = undefined;
+let operator;
+let x;
+let y;
 
 function enterNumberInput(input) {
-    const text = output.innerText;
-    const recentEntryChar = text.charAt(text.length - 1);
-    const updatedOutput = text + input;
+    const recentEntry = outputElement.innerText;
+    const recentEntryChar = recentEntry.charAt(recentEntry.length - 1);
+    const updatedEntry = recentEntry + input;
     if (input === ".") {
         if (recentEntryChar === input) return;
         const recentEntryIsEmpty = recentEntryChar === "";
@@ -66,32 +66,32 @@ function enterNumberInput(input) {
         if (recentEntryIsEmpty || recentEntryIsOperator) return;
     }
     if (operator === undefined) {
-        x = updatedOutput;
+        x = updatedEntry;
     } else {
-        const variables = updatedOutput.split(operator);
+        const variables = updatedEntry.split(operator);
         const lastVariable = variables[variables.length - 1];
         y = lastVariable;
     }
-    output.innerText = updatedOutput;
+    outputElement.innerText = updatedEntry;
 }
 
 function enterOperationInput(input) {
-    const text = output.innerText;
-    const recentEntryChar = text.charAt(text.length - 1);
-    const recentEntryIsEmpty = recentEntryChar === "";
+    const recentEntry = outputElement.innerText;
+    const recentEntryChar = recentEntry.charAt(recentEntry.length - 1);
     if (input === recentEntryChar) return;
+    const recentEntryIsEmpty = recentEntryChar === "";
+    const recentEntryIsOperator = operators.includes(recentEntryChar);
     if (input === "-") {
-        const recentEntryIsOperator = operators.includes(recentEntryChar);
         if (recentEntryIsEmpty || recentEntryIsOperator) {
-            output.innerText += input;
+            outputElement.innerText += input;
             return;
         }
     }
     if (recentEntryIsEmpty) return;
-    if (operators.includes(recentEntryChar)) return;
-    if (operator !== undefined) displayOutput();
+    if (recentEntryIsOperator) return;
+    displayOutput();
     operator = input;
-    output.innerText += input;
+    outputElement.innerText += input;
 }
 
 function displayOutput() {
@@ -102,29 +102,29 @@ function displayOutput() {
         const result = `${operation(x, y)}`;
         x = result;
         y = operator = undefined;
-        output.innerText = result;
+        outputElement.innerText = result;
     }
 }
 
 function clearEntry() {
-    if (output.length !== 0) {
-        const text = output.innerText;
-        const recentEntryIndex = text.length - 1;
-        const updatedOutput = text.substring(0, recentEntryIndex);
+    const recentEntry = outputElement.innerText;
+    if (recentEntry.length !== 0) {
+        const recentEntryIndex = recentEntry.length - 1;
+        const updatedOutput = recentEntry.substring(0, recentEntryIndex);
         if (operator === undefined) {
             x = updatedOutput;
         } else if (operator !== undefined) {
-            const variables = text.split(operator);
+            const variables = recentEntry.split(operator);
             const lastVariable = variables[variables.length - 1];
             y = lastVariable;
         } else {
             operator = undefined;
         }
-        output.innerText = updatedOutput;
+        outputElement.innerText = updatedOutput;
     }
 }
 
 function allClear() {
     x = y = operator = undefined;
-    output.innerText = "";
+    outputElement.innerText = "";
 }
