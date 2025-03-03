@@ -6,7 +6,6 @@ A simple calculator website that everyone has definitely not done yet. Just like
 * Subtraction 
 * Multiplication 
 * Division 
-* Modulo
 
 ### Tech Stack
 
