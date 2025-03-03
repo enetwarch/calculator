@@ -56,6 +56,7 @@ let x;
 let y;
 
 function enterNumberInput(input) {
+    if (outputElement.innerText === "Infinity") allClear();
     const recentEntry = outputElement.innerText;
     const recentEntryIndex = recentEntry.length - 1
     const recentEntryChar = recentEntry.charAt(recentEntryIndex);
@@ -82,6 +83,7 @@ function enterNumberInput(input) {
 }
 
 function enterOperationInput(input) {
+    if (outputElement.innerText === "Infinity") allClear();
     const recentEntry = outputElement.innerText;
     const recentEntryIndex = recentEntry.length - 1;
     const recentEntryChar = recentEntry.charAt(recentEntryIndex);
