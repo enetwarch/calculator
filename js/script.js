@@ -56,7 +56,23 @@ let y = undefined;
 let operator = undefined;
 
 function enterNumberInput(input) {
-    output.innerText += input;
+    const text = output.innerText;
+    const recentEntryChar = text.charAt(text.length - 1);
+    const updatedOutput = text + input;
+    if (input === ".") {
+        if (recentEntryChar === input) return;
+        const recentEntryIsEmpty = recentEntryChar === "";
+        const recentEntryIsOperator = operators.includes(recentEntryChar);
+        if (recentEntryIsEmpty || recentEntryIsOperator) return;
+    }
+    if (operator === undefined) {
+        x = updatedOutput;
+    } else {
+        const variables = updatedOutput.split(operator);
+        const lastVariable = variables[variables.length - 1];
+        y = lastVariable;
+    }
+    output.innerText = updatedOutput;
 }
 
 function enterOperationInput(input) {
@@ -65,48 +81,46 @@ function enterOperationInput(input) {
     const recentEntryIsEmpty = recentEntryChar === "";
     if (input === recentEntryChar) return;
     if (input === "-") {
-        const forNegativeNumber = operators.includes(recentEntryChar);
-        if (recentEntryIsEmpty || forNegativeNumber) {
+        const recentEntryIsOperator = operators.includes(recentEntryChar);
+        if (recentEntryIsEmpty || recentEntryIsOperator) {
             output.innerText += input;
             return;
         }
     }
     if (recentEntryIsEmpty) return;
     if (operators.includes(recentEntryChar)) return;
-    if (x === undefined) {
-        x = parseInt(text);
-    } else {
-        displayOutput();
-    }
+    if (operator !== undefined) displayOutput();
     operator = input;
     output.innerText += input;
 }
 
 function displayOutput() {
     if (operator !== undefined) {
-        if (y === undefined) {
-            const text = output.innerText;
-            const variables = text.split(operator);
-            const lastVariable = variables[variables.length - 1];
-            y = parseInt(lastVariable);
-        }
+        x = parseFloat(x);
+        y = parseFloat(y);
         const operation = operations[operator];
-        const result = operation(x, y);
+        const result = `${operation(x, y)}`;
         x = result;
         y = operator = undefined;
-        output.innerText = `${result}`;
+        output.innerText = result;
     }
 }
 
 function clearEntry() {
     if (output.length !== 0) {
         const text = output.innerText;
-        const recentEntryIndex = text.length -1;
-        const recentEntryChar = text.charAt(recentEntryIndex);
-        if (recentEntryChar === operator) {
+        const recentEntryIndex = text.length - 1;
+        const updatedOutput = text.substring(0, recentEntryIndex);
+        if (operator === undefined) {
+            x = updatedOutput;
+        } else if (operator !== undefined) {
+            const variables = text.split(operator);
+            const lastVariable = variables[variables.length - 1];
+            y = lastVariable;
+        } else {
             operator = undefined;
         }
-        output.innerText = text.substring(0, recentEntryIndex);
+        output.innerText = updatedOutput;
     }
 }
 
