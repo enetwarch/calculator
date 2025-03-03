@@ -99,6 +99,7 @@ function enterOperationInput(input) {
     if (recentEntryIsEmpty) return;
     if (recentEntryIsOperator) return;
     displayOutput();
+    if (outputElement.innerText === "Infinity") return;
     operator = input;
     outputElement.innerText += input;
 }
