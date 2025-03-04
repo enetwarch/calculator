@@ -54,13 +54,14 @@ const operations = {
     "×": (x, y) => x * y,
     "÷": (x, y) => x / y
 };
+const infinity = /^-?I/i;
 
 let operator;
 let x;
 let y;
 
 function enterNumberInput(input) {
-    if (outputElement.innerText === "Infinity") allClear();
+    if (infinity.test(outputElement.innerText)) allClear();
     const recentEntry = outputElement.innerText;
     const recentEntryIndex = recentEntry.length - 1
     const recentEntryChar = recentEntry.charAt(recentEntryIndex);
@@ -87,7 +88,7 @@ function enterNumberInput(input) {
 }
 
 function enterOperationInput(input) {
-    if (outputElement.innerText === "Infinity") allClear();
+    if (infinity.test(outputElement.innerText)) allClear();
     const recentEntry = outputElement.innerText;
     const recentEntryIndex = recentEntry.length - 1;
     const recentEntryChar = recentEntry.charAt(recentEntryIndex);
@@ -104,16 +105,16 @@ function enterOperationInput(input) {
     if (recentEntryIsEmpty) return;
     if (recentEntryIsOperator) return;
     displayOutput();
-    if (outputElement.innerText === "Infinity") return;
+    if (infinity.test(outputElement.innerText)) {
+        return;
+    }
     operator = input;
     outputElement.innerText += input;
 }
 
 function displayOutput() {
     if (y === undefined) return;
-    if (operator === undefined) {
-        return;
-    }
+    if (operator === undefined) return;
     x = parseFloat(x);
     y = parseFloat(y);
     const operation = operations[operator];
@@ -126,7 +127,11 @@ function displayOutput() {
     } else {
         formattedResult = result.toFixed(2);
     }
-    x = formattedResult;
+    if (infinity.test(formattedResult)) {
+        x = undefined;
+    } else {
+        x = formattedResult;
+    }
     y = operator = undefined;
     outputElement.innerText = formattedResult;
 }
@@ -141,10 +146,12 @@ function clearEntry() {
         operator = undefined;
     } else if (operator === undefined) {
         x = updatedOutput;
+        if (x === "") x = undefined;
     } else if (operator !== undefined) {
         const variables = recentEntry.split(operator);
         const lastVariable = variables[variables.length - 1];
         y = lastVariable;
+        if (y === "") y = undefined;
     } else {
         return;
     }
