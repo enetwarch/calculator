@@ -33,7 +33,51 @@ body {
     min-height: 100vh;
 }
 
-.calculator {
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+header {
+    color: var(--white);
+    display: flex;
+    justify-content: space-between;
+    padding: 2rem clamp(1rem, 10vw, 10rem);
+    width: 100%;
+}
+
+header nav {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+}
+
+header nav .white {
+    color: var(--white);
+}
+
+header nav .red {
+    color: var(--red);
+}
+
+header nav .green {
+    color: var(--green);
+}
+
+header nav .blue {
+    color: var(--blue);
+}
+
+main {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    padding-block: 2rem;
+    width: 100vw;
+}
+
+main .calculator {
     background-color: var(--black-2);
     border-radius: 2rem;
     display: grid;
@@ -42,11 +86,11 @@ body {
     padding: 2rem;
 }
 
-.calculator > * {
+main .calculator > * {
     border-radius: 1rem;
 }
 
-.calculator #output {
+main .calculator #output {
     align-items: center;
     background-color: var(--green);
     color: var(--black-2);
@@ -60,35 +104,43 @@ body {
     text-wrap: nowrap;
 }
 
-.calculator .input {
+main .calculator .input {
     align-items: center;
     display: flex;
     font-size: 2rem;
     justify-content: center;
 }
 
-.calculator .input:hover {
+main .calculator .input:hover {
     cursor: pointer;
 }
 
-.calculator .operation.delete.input {
+main .calculator .operation.delete.input {
     background-color: var(--red);
 }
 
-.calculator .operation.input {
+main .calculator .operation.input {
     background-color: var(--blue);
     color: var(--black-2);
 }
 
-.calculator .number.input {
+main .calculator .number.input {
     background-color: var(--black-3);
     color: var(--white);
 }
 
-.calculator #equals.operation.input {
+main .calculator #equals.operation.input {
     grid-area: 5 / 4 / 7 / 4;
 }
 
-.calculator #zero.input {
+main .calculator #zero.input {
     grid-column: 1 / 3;
+}
+
+footer {
+    align-items: center;
+    color: var(--white);
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem;
 }
