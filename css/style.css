@@ -4,10 +4,10 @@
 }
 
 :root {
-    --dark-1: #1a1a1a;
-    --dark-2: #333333;
-    --dark-3: #4d4d4d;
-    --light-1: #e6e6e6;
+    --dark-1: hsl(0, 0%, 10%);
+    --dark-2: hsl(0, 0%, 20%);
+    --dark-3: hsl(0, 0%, 30%);
+    --light-1: hsl(0, 0%, 90%);
     --blue: #608cab;
     --green: #72a079;
     --red: #bb4948;
