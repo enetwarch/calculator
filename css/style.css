@@ -4,13 +4,13 @@
 }
 
 :root {
-    --black-1: #1a1a1a;
-    --black-2: #333333;
-    --black-3: #4d4d4d;
+    --dark-1: #1a1a1a;
+    --dark-2: #333333;
+    --dark-3: #4d4d4d;
+    --light-1: #e6e6e6;
     --blue: #608cab;
     --green: #72a079;
     --red: #bb4948;
-    --white: #e6e6e6;
 }
 
 * {
@@ -29,7 +29,7 @@ html {
 
 body {
     align-items: center;
-    background-color: var(--black-1);
+    background-color: var(--dark-1);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -37,7 +37,7 @@ body {
 }
 
 .calculator {
-    background-color: var(--black-2);
+    background-color: var(--dark-2);
     border-radius: 1rem;
     display: grid;
     gap: 1rem;
@@ -52,7 +52,7 @@ body {
 .calculator #output {
     align-items: center;
     background-color: var(--green);
-    color: var(--black-2);
+    color: var(--dark-2);
     display: flex;
     font-size: 3rem;
     grid-column: 1 / 5;
@@ -82,12 +82,12 @@ body {
 
 .calculator .operation.input {
     background-color: var(--blue);
-    color: var(--black-2);
+    color: var(--dark-2);
 }
 
 .calculator .number.input {
-    background-color: var(--black-3);
-    color: var(--white);
+    background-color: var(--dark-3);
+    color: var(--light-1);
 }
 
 .calculator #equals.operation.input {
