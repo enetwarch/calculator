@@ -23,10 +23,6 @@
     user-select: none;
 }
 
-html {
-    font-size: clamp(12px, 2vw, 16px);
-}
-
 body {
     align-items: center;
     background-color: var(--dark-1);
@@ -96,4 +92,10 @@ body {
 
 .calculator #zero.input {
     grid-column: 1 / 3;
+}
+
+@media only screen and (max-width: 800px) {
+    html {
+        font-size: 12px;
+    }
 }
