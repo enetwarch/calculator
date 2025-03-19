@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+@font-face {
+    font-family: "Arial Rounded MT Bold";
+    src: url("../font/arialroundedmtbold.ttf");
+}
 
 :root {
     --black-1: #1a1a1a;
@@ -13,7 +16,7 @@
 * {
     -webkit-tap-highlight-color: transparent;
     box-sizing: border-box;
-    font-family: "Varela Round", sans-serif;
+    font-family: "Arial Rounded MT Bold", sans-serif;
     font-weight: bold;
     margin: 0;
     padding: 0;
