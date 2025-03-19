@@ -38,7 +38,7 @@ body {
 
 .calculator {
     background-color: var(--black-2);
-    border-radius: 2rem;
+    border-radius: 1rem;
     display: grid;
     gap: 1rem;
     grid-template: 7rem repeat(5, 4rem) / repeat(4, 4rem);
@@ -68,10 +68,12 @@ body {
     display: flex;
     font-size: 2rem;
     justify-content: center;
+    transition: opacity 0.25s;
 }
 
 .calculator .input:hover {
     cursor: pointer;
+    opacity: 0.8;
 }
 
 .calculator .operation.delete.input {
