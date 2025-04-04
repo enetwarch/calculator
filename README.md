@@ -1,4 +1,4 @@
-# [Calculator](https://enetwarch.github.io/calculator/)
+# Calculator
 
 A simple calculator website that everyone has definitely not done yet. Just like any other calculator, it has features that allow the user to perform **basic arithmetic operations**. These operations include:
 
@@ -14,3 +14,7 @@ A simple calculator website that everyone has definitely not done yet. Just like
 
 * [**Font Awesome**](https://fontawesome.com/): Used for the svg favicon.
     * [Calculator](https://fontawesome.com/icons/calculator)
+
+### License
+
+* [MIT License](LICENSE)
