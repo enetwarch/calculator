@@ -1,4 +1,6 @@
-window.addEventListener("load", addListeners);
+window.addEventListener("load", () => {
+    listenerConfig.forEach(config => addListeners(config));
+});
 
 const listenerConfig = [
     [() => enterNumber("1"), [["click", "one"], ["keyup", "Numpad1"], ["keyup", "Digit1"]]],
@@ -12,37 +14,35 @@ const listenerConfig = [
     [() => enterNumber("9"), [["click", "nine"], ["keyup", "Numpad9"], ["keyup", "Digit9"]]],
     [() => enterNumber("0"), [["click", "zero"], ["keyup", "Numpad0"], ["keyup", "Digit0"]]],
     [() => enterNumber("."), [["click", "decimal"], ["keyup", "NumpadDecimal"], ["keyup", "Period"]]],
+
     [() => enterOperation("+"), [["click", "add"], ["keyup", "NumpadAdd"]]],
     [() => enterOperation("-"), [["click", "subtract"], ["keyup", "NumpadSubtract"]]],
     [() => enterOperation("×"), [["click", "multiply"], ["keyup", "NumpadMultiply"]]],
     [() => enterOperation("÷"), [["click", "divide"], ["keyup", "NumpadDivide"]]],
+
     [() => displayOutput(), [["click", "equals"], ["keyup", "Equal"], ["keyup", "NumpadEnter"]]],
     [() => clearEntry(), [["click", "clearEntry"], ["keyup", "Backspace"]]],
     [() => allClear(), [["click", "allClear"], ["keyup", "Delete"]]]
 ];
 
-function addListeners() {
-    listenerConfig.forEach(config => {
-        const func = config[0];
-        const listeners = config[1];
-        listeners.forEach(listener => {
-            addListener(listener, func);
-        });
-    });
+function addListeners(config) {
+    const [callback, listeners] = config;
+    listeners.forEach(listener => addListener(listener, callback));
 }
 
-function addListener(listener, func) {
-    const eventType = listener[0];
-    if (eventType === "click") {
-        const id = listener[1];
-        const element = document.getElementById(id);
-        element.addEventListener(eventType, func);
-    } else if (eventType === "keyup") {
-        const eventCode = listener[1];
-        window.addEventListener(eventType, event => {
-            if (event.code === eventCode) func();
+function addListener(listener, callback) {
+    const [type, key] = listener;
+
+    if (type === "click") {
+        const element = document.getElementById(key);
+        if (!element) return;
+
+        element.addEventListener(type, callback);
+    } else if (type === "keyup") {
+        window.addEventListener(type, event => {
+            if (event.code === key) callback();
         });
-    }    
+    }
 }
 
 const outputElement = document.getElementById("output");
