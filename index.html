@@ -7,30 +7,29 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Calculator</title>
     <script type="module" src="src/main.ts"></script>
-    <script src="https://kit.fontawesome.com/0541e3b46f.js" crossorigin="anonymous"></script>
   </head>
   <body>
-    <div class="calculator">
-      <div id="output" class="output"></div>
-      <div id="allClear" class="operation delete input">AC</div>
-      <div id="clearEntry" class="operation delete input">CE</div>
-      <div id="divide" class="operation input">÷</div>
-      <div id="multiply" class="operation input">×</div>
-      <div id="one" class="number input">1</div>
-      <div id="two" class="number input">2</div>
-      <div id="three" class="number input">3</div>
-      <div id="subtract" class="operation input">-</div>
-      <div id="four" class="number input">4</div>
-      <div id="five" class="number input">5</div>
-      <div id="six" class="number input">6</div>
-      <div id="add" class="operation input">+</div>
-      <div id="seven" class="number input">7</div>
-      <div id="eight" class="number input">8</div>
-      <div id="nine" class="number input">9</div>
-      <div id="equals" class="operation input">=</div>
-      <div id="zero" class="number input">0</div>
-      <div id="decimal" class="number input">.</div>
-    </div>
+    <section class="calculator">
+      <div id="output" class="calculator__output"></div>
+      <button id="allClear" class="calculator__input calculator__input--delete" type="button">AC</button>
+      <button id="clearEntry" class="calculator__input calculator__input--delete" type="button">CE</button>
+      <button id="divide" class="calculator__input calculator__input--operation" type="button">÷</button>
+      <button id="multiply" class="calculator__input calculator__input--operation" type="button">×</button>
+      <button id="one" class="calculator__input" type="button">1</button>
+      <button id="two" class="calculator__input" type="button">2</button>
+      <button id="three" class="calculator__input" type="button">3</button>
+      <button id="subtract" class="calculator__input calculator__input--operation" type="button">-</button>
+      <button id="four" class="calculator__input" type="button">4</button>
+      <button id="five" class="calculator__input" type="button">5</button>
+      <button id="six" class="calculator__input" type="button">6</button>
+      <button id="add" class="calculator__input calculator__input--operation" type="button">+</button>
+      <button id="seven" class="calculator__input" type="button">7</button>
+      <button id="eight" class="calculator__input" type="button">8</button>
+      <button id="nine" class="calculator__input" type="button">9</button>
+      <button id="equals" class="calculator__input calculator__input--operation" type="button">=</button>
+      <button id="zero" class="calculator__input" type="button">0</button>
+      <button id="decimal" class="calculator__input" type="button">.</button>
+    </section>
     <script type="module" src="js/script.js" async defer></script>
   </body>
 </html>
