@@ -1,5 +1,7 @@
 window.addEventListener("load", () => {
-  listenerConfig.forEach((config) => addListeners(config));
+  for (const config of listenerConfig) {
+    addListeners(config);
+  }
 });
 
 const listenerConfig = [
@@ -147,7 +149,9 @@ const listenerConfig = [
 
 function addListeners(config) {
   const [callback, listeners] = config;
-  listeners.forEach((listener) => addListener(listener, callback));
+  for (const listener of listeners) {
+    addListener(listener, callback);
+  }
 }
 
 function addListener(listener, callback) {
@@ -175,9 +179,9 @@ const operations = {
 };
 
 const infinity = /^-?I/i;
-let x,
-  operator,
-  y = undefined;
+let x = undefined;
+let operator = undefined;
+let y = undefined;
 
 function enterNumber(input) {
   if (infinity.test(outputElement.innerText)) allClear();
