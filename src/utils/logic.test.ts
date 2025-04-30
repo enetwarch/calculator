@@ -1,25 +1,25 @@
 import {
   controlOutput,
-  getLastCharacter,
   getLastTerm,
-  stringifyCharacter,
+  getLastValue,
   stringifyOutput,
+  stringifyValue,
   validateInput,
 } from "@/utils/logic";
 
-describe(getLastCharacter.name, () => {
+describe(getLastValue.name, () => {
   it("should return undefined if the output is empty", () => {
-    expect(getLastCharacter([])).toBe(undefined);
+    expect(getLastValue([])).toBe(undefined);
   });
 
   it("should return the last element in the output array", () => {
-    expect(getLastCharacter(["2", "0"])).toBe("0");
-    expect(getLastCharacter(["3", "2", "1"])).toBe("1");
+    expect(getLastValue(["2", "0"])).toBe("0");
+    expect(getLastValue(["3", "2", "1"])).toBe("1");
   });
 
   it("should return an expression if that is the last element in the array", () => {
-    expect(getLastCharacter(["negative"])).toBe("negative");
-    expect(getLastCharacter(["1", "times"])).toBe("times");
+    expect(getLastValue(["negative"])).toBe("negative");
+    expect(getLastValue(["1", "times"])).toBe("times");
   });
 });
 
@@ -125,39 +125,39 @@ describe(validateInput.name, () => {
   });
 });
 
-describe(stringifyCharacter.name, () => {
-  it(`should correctly convert "negative" to "-"`, () => {
-    expect(stringifyCharacter("negative")).toBe("-");
+describe(stringifyValue.name, () => {
+  it(`should correctly stringify "negative" to "-"`, () => {
+    expect(stringifyValue("negative")).toBe("-");
   });
 
-  it(`should correctly convert "plus" to "+"`, () => {
-    expect(stringifyCharacter("plus")).toBe("+");
+  it(`should correctly stringify "plus" to "+"`, () => {
+    expect(stringifyValue("plus")).toBe("+");
   });
 
-  it(`should correctly convert "minus" to "-"`, () => {
-    expect(stringifyCharacter("minus")).toBe("-");
+  it(`should correctly stringify "minus" to "-"`, () => {
+    expect(stringifyValue("minus")).toBe("-");
   });
 
-  it(`should correctly convert "times" to "×"`, () => {
-    expect(stringifyCharacter("times")).toBe("×");
+  it(`should correctly stringify "times" to "×"`, () => {
+    expect(stringifyValue("times")).toBe("×");
   });
 
-  it(`should correctly convert "dividedBy" to "÷"`, () => {
-    expect(stringifyCharacter("dividedBy")).toBe("÷");
+  it(`should correctly stringify "dividedBy" to "÷"`, () => {
+    expect(stringifyValue("dividedBy")).toBe("÷");
   });
 });
 
 describe(stringifyOutput.name, () => {
-  it("should convert an empty output to an empty string", () => {
+  it("should stringify an empty output to an empty string", () => {
     expect(stringifyOutput([])).toBe("");
   });
 
-  it("should correctly convert signs", () => {
+  it("should correctly stringify signs", () => {
     expect(stringifyOutput(["negative"])).toBe("-");
     expect(stringifyOutput(["negative", "1", "0"])).toBe("-10");
   });
 
-  it("should correctly convert operations", () => {
+  it("should correctly stringify operations", () => {
     expect(stringifyOutput(["1", "plus", "1"])).toBe("1+1");
     expect(stringifyOutput(["6", "9", "minus", "4", "2", "0"])).toBe("69-420");
     expect(stringifyOutput(["1", "times", "2", "7"])).toBe("1×27");
@@ -187,6 +187,47 @@ describe(controlOutput.name, () => {
     it("should return an output without the previous last character", () => {
       expect(controlOutput("clearEntry", ["1", "2", "3"])).toEqual(["1", "2"]);
       expect(controlOutput("clearEntry", ["6", "times", "9"])).toEqual(["6", "times"]);
+    });
+  });
+
+  describe.skip(`"equals" control`, () => {
+    it("should return the same output if there are no operations", () => {
+      expect(controlOutput("equals", ["1"])).toEqual(["1"]);
+      expect(controlOutput("equals", ["negative", "6", "9"])).toEqual(["negative", "6", "9"]);
+    });
+
+    it(`should return a sum if there is a "plus" operator`, () => {
+      expect(controlOutput("equals", ["1", "plus", "1"])).toEqual(["2"]);
+      expect(controlOutput("equals", ["negative", "2", "0", "plus", "6", "9"])).toEqual(["4", "9"]);
+    });
+
+    it(`should return a difference if there is a "minus" operator`, () => {
+      expect(controlOutput("equals", ["1", "0", "minus", "1"])).toEqual(["9"]);
+      expect(controlOutput("equals", ["negative", "3", "0", "minus", "6"])).toEqual(["negative", "3", "6"]);
+    });
+
+    it(`should return a product if there is a "times" operator`, () => {
+      expect(controlOutput("equals", ["6", "times", "6"])).toEqual(["3", "6"]);
+      expect(controlOutput("equals", ["negative", "1", "0", "times", "9"])).toEqual(["negative", "9", "0"]);
+    });
+
+    it(`should return a quotient if there is a "dividedBy" operator`, () => {
+      expect(controlOutput("equals", ["2", "0", "dividedBy", "1", "0"])).toEqual(["2", "0"]);
+      expect(controlOutput("equals", ["5", "0", "dividedBy", "8"])).toEqual(["6", ".", "2", "5"]);
+    });
+
+    it(`should return error if 0 "dividedBy" 0`, () => {
+      expect(controlOutput("equals", ["0", "dividedBy", "0"])).toEqual("Error");
+    });
+
+    it(`should return negative infinity if a negative number is "dividedBy" zero`, () => {
+      expect(controlOutput("equals", ["negative", "1", "dividedBy", "0"])).toEqual(["negative", "Infinity"]);
+      expect(controlOutput("equals", ["negative", "9", "9", "dividedBy", "0"])).toEqual(["negative", "Infinity"]);
+    });
+
+    it(`should return infinity if a number is "dividedBy" zero`, () => {
+      expect(controlOutput("equals", ["1", "dividedBy", "0"])).toEqual(["Infinity"]);
+      expect(controlOutput("equals", ["9", "9", "dividedBy", "0"])).toEqual(["Infinity"]);
     });
   });
 });
