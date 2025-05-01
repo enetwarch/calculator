@@ -12,12 +12,15 @@ type Control = (typeof controls)[number];
 
 type Input = Digit | Operation | Sign;
 type Value = Input | "Infinity" | "Error";
-type Output = Value[];
+export type Output = Value[];
 
 const signLiterals = ["-"] as const;
 type SignLiteral = (typeof signLiterals)[number];
 const signLiteralMap: Record<Sign, SignLiteral> = Object.freeze({
   negative: "-",
+});
+const signSemanticMap: Record<SignLiteral, Sign> = Object.freeze({
+  "-": "negative",
 });
 
 const operationLiterals = ["+", "-", "×", "÷"] as const;
@@ -27,6 +30,12 @@ const operationLiteralMap: Record<Operation, OperationLiteral> = Object.freeze({
   minus: "-",
   times: "×",
   dividedBy: "÷",
+});
+const operationSemanticMap: Record<OperationLiteral, Operation> = Object.freeze({
+  "+": "plus",
+  "-": "minus",
+  "×": "times",
+  "÷": "dividedBy",
 });
 
 type OperationFunction = (x: number, y: number) => number;
@@ -40,9 +49,93 @@ const operationFunctionMap: Record<Operation, OperationFunction> = Object.freeze
 export function controlOutput(control: Control, output: Output): Output {
   if (control === "allClear") return [];
   if (control === "clearEntry") return output.slice(0, -1);
-  if (control === "equals") return [];
+  if (control === "equals") return calculateOutput(output);
 
   throw Error(`Invalid control or output: ${control}, ${output}`);
+}
+
+function calculateOutput(output: Output): Output {
+  if (output.every((value) => !isOperation(value))) return output;
+  const operationIndices: number[] = getOperationIndices(output);
+
+  const calculated: Output = operationIndices.reduce<Output>((calculated, operationIndex, index, operationIndices) => {
+    if (calculated.includes("Error")) return calculated;
+
+    const x: number = ((): number => {
+      if (calculated.length === 0) return parseTerm(output, 0, operationIndex);
+      return parseTerm(calculated);
+    })();
+
+    const y: number = ((): number => {
+      const nextOperationIndex: number = operationIndices[index + 1];
+      return parseTerm(output, operationIndex + 1, nextOperationIndex);
+    })();
+
+    const operation: Value = output[operationIndex];
+    const operationFunction: OperationFunction = ((): OperationFunction => {
+      if (isOperation(operation)) return operationFunctionMap[operation];
+      throw Error(`Not an operation: ${operation}`);
+    })();
+
+    const newCalculated: Output = ((): Output => {
+      const result: number = operationFunction(x, y);
+      if (operation !== "dividedBy" || !Number.isNaN(result)) {
+        return parseOutput(result.toString());
+      }
+
+      return ["Error"];
+    })();
+
+    return newCalculated;
+  }, []);
+
+  if (calculated.includes("Infinity") || calculated.includes("Error")) return calculated;
+
+  const roundedCalculated: number = roundTerm(calculated);
+  return parseOutput(roundedCalculated.toString());
+}
+
+export function roundTerm(output: Output, decimalPlaces = 2): number {
+  if (!output.every((value) => isDigit(value) || isSign(value))) {
+    throw Error(`Not a term: ${output}`);
+  }
+
+  const parsedTerm: number = parseTerm(output);
+  return Number.parseFloat(parsedTerm.toFixed(decimalPlaces));
+}
+
+export function parseTerm(output: Output, start = 0, end = output.length): number {
+  const stringifiedTerm: string = stringifyOutput(output.slice(start, end));
+  const parsedTerm: number = Number.parseFloat(stringifiedTerm);
+
+  if (Number.isNaN(parsedTerm)) {
+    throw Error(`Term is parsed into NaN: ${stringifiedTerm}`);
+  }
+
+  if (parsedTerm.toString() !== Number(stringifiedTerm).toString()) {
+    throw Error(`Parsed and stringified term are not equal: ${parsedTerm}, ${stringifiedTerm}`);
+  }
+
+  return parsedTerm;
+}
+
+export function parseOutput(output: string): Output {
+  return [...output].flatMap((value, index, array) => {
+    if (isDigit(value)) return value;
+    if (isSignLiteral(value)) {
+      if (index === 0) return signSemanticMap[value];
+
+      const previousValue: string = array[index - 1];
+      if (isSignLiteral(previousValue)) throw Error(`Duplicate signs: ${output}`);
+      if (isOperationLiteral(previousValue)) return signSemanticMap[value];
+    }
+
+    if (isOperationLiteral(value)) return operationSemanticMap[value];
+    if ("Infinity".includes(value)) return value === "I" ? "Infinity" : [];
+    if ("Error".includes(value)) return value === "E" ? "Error" : [];
+
+    throw Error(`Invalid value: ${value}`);
+  });
 }
 
 export function stringifyOutput(output: Output): string {
@@ -51,8 +144,9 @@ export function stringifyOutput(output: Output): string {
 
 export function stringifyValue(value: Value): string {
   if (isDigit(value)) return value;
-  if (isOperation(value)) return operationLiteralMap[value];
   if (isSign(value)) return signLiteralMap[value];
+  if (isOperation(value)) return operationLiteralMap[value];
+  if (value === "Infinity" || value === "Error") return value;
 
   throw Error(`Invalid value: ${value}`);
 }
@@ -105,6 +199,10 @@ function validateDecimalInput(decimal: ".", output: Output): boolean {
   throw Error(`Invalid last value: ${lastValue}`);
 }
 
+export function getOperationIndices(output: Output): number[] {
+  return output.flatMap((value, index) => (isOperation(value) ? index : []));
+}
+
 export function getLastTerm(output: Output): Output {
   const lastOperationIndex: number = output.findLastIndex((value) => {
     return isOperation(value);
@@ -132,4 +230,12 @@ function isSign(value: string): value is Sign {
 
 function isOperation(value: string): value is Operation {
   return operations.includes(value as Operation);
+}
+
+function isSignLiteral(value: string): value is SignLiteral {
+  return signLiterals.includes(value as SignLiteral);
+}
+
+function isOperationLiteral(value: string): value is OperationLiteral {
+  return operationLiterals.includes(value as OperationLiteral);
 }
