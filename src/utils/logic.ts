@@ -56,38 +56,29 @@ export function controlOutput(control: Control, output: Output): Output {
 
 function calculateOutput(output: Output): Output {
   if (output.every((value) => !isOperation(value))) return output;
-  const operationIndices: number[] = getOperationIndices(output);
 
-  const calculated: Output = operationIndices.reduce<Output>((calculated, operationIndex, index, operationIndices) => {
-    if (calculated.includes("Error")) return calculated;
+  const calculated: Output = ((): Output => {
+    // PEMDAS Precedence (Parentheses, Exponents, Multiplication, Division, Addition, and Subtraction)
+    const MD: Operation[] = ["times", "dividedBy"];
+    const AS: Operation[] = ["plus", "minus"];
 
-    const x: number = ((): number => {
-      if (calculated.length === 0) return parseTerm(output, 0, operationIndex);
-      return parseTerm(calculated);
-    })();
+    const calculator = (precedence: Operation[], output: Output): Output => {
+      const operationIndex: number = output.findIndex((value) => {
+        if (!isOperation(value)) return false;
+        return precedence.includes(value);
+      });
 
-    const y: number = ((): number => {
-      const nextOperationIndex: number = operationIndices[index + 1];
-      return parseTerm(output, operationIndex + 1, nextOperationIndex);
-    })();
+      if (operationIndex === -1) return output;
 
-    const operation: Value = output[operationIndex];
-    const operationFunction: OperationFunction = ((): OperationFunction => {
-      if (isOperation(operation)) return operationFunctionMap[operation];
-      throw Error(`Not an operation: ${operation}`);
-    })();
+      const calculated: Output = calculateOperation(output, operationIndex);
+      return calculator(precedence, calculated);
+    };
 
-    const newCalculated: Output = ((): Output => {
-      const result: number = operationFunction(x, y);
-      if (operation !== "dividedBy" || !Number.isNaN(result)) {
-        return parseOutput(result.toString());
-      }
+    const reducedMD: Output = calculator(MD, output);
+    const reducedAD: Output = calculator(AS, reducedMD);
 
-      return ["Error"];
-    })();
-
-    return newCalculated;
-  }, []);
+    return reducedAD;
+  })();
 
   if (calculated.includes("Infinity") || calculated.includes("Error")) return calculated;
 
@@ -95,6 +86,61 @@ function calculateOutput(output: Output): Output {
   return parseOutput(roundedCalculated.toString());
 }
 
+/** @internal */
+export function calculateOperation(output: Output, operationIndex: number): Output {
+  if (output.includes("Error")) return ["Error"];
+
+  const operationStartingIndex: number =
+    ((): number | undefined => {
+      for (let i = operationIndex - 1; i > 0; i--) {
+        const value: Value = output[i];
+        if (isOperation(value)) return i + 1;
+      }
+    })() || 0;
+
+  const operationEndingIndex: number =
+    ((): number | undefined => {
+      for (let i = operationIndex + 1; i < output.length; i++) {
+        const value: Value = output[i];
+        if (isOperation(value)) return i;
+      }
+    })() || output.length;
+
+  const x: number = ((): number => {
+    const start: number = operationStartingIndex;
+    const end: number = operationIndex;
+    return parseTerm(output, start, end);
+  })();
+
+  const y: number = ((): number => {
+    const start: number = operationIndex + 1;
+    const end: number = operationEndingIndex;
+    return parseTerm(output, start, end);
+  })();
+
+  const operation: Value = output[operationIndex];
+  const operationFunction: OperationFunction = ((): OperationFunction => {
+    if (isOperation(operation)) return operationFunctionMap[operation];
+    throw Error(`Not an operation: ${operation}`);
+  })();
+
+  const calculated: Output = ((): Output => {
+    const result: number = operationFunction(x, y);
+    if (operation !== "dividedBy" || !Number.isNaN(result)) {
+      return parseOutput(result.toString());
+    }
+
+    return ["Error"];
+  })();
+
+  return output.flatMap((value, index) => {
+    if (!(index >= operationStartingIndex && index < operationEndingIndex)) return value;
+    if (index !== operationStartingIndex) return [];
+    return calculated;
+  });
+}
+
+/** @internal */
 export function roundTerm(output: Output, decimalPlaces = 2): number {
   if (!output.every((value) => isDigit(value) || isSign(value))) {
     throw Error(`Not a term: ${output}`);
@@ -104,6 +150,7 @@ export function roundTerm(output: Output, decimalPlaces = 2): number {
   return Number.parseFloat(parsedTerm.toFixed(decimalPlaces));
 }
 
+/** @internal */
 export function parseTerm(output: Output, start = 0, end = output.length): number {
   const stringifiedTerm: string = stringifyOutput(output.slice(start, end));
   const parsedTerm: number = Number.parseFloat(stringifiedTerm);
@@ -119,6 +166,7 @@ export function parseTerm(output: Output, start = 0, end = output.length): numbe
   return parsedTerm;
 }
 
+/** @internal */
 export function parseOutput(output: string): Output {
   return [...output].flatMap((value, index, array) => {
     if (isDigit(value)) return value;
@@ -149,6 +197,21 @@ export function stringifyValue(value: Value): string {
   if (value === "Infinity" || value === "Error") return value;
 
   throw Error(`Invalid value: ${value}`);
+}
+
+/** @internal */
+export function insertInput(input: Input, output: Output, isValid = false): Output {
+  if (!isValid && !validateInput(input, output)) return output;
+
+  const insert: Input = ((): Input => {
+    if (input !== "minus") return input;
+
+    const lastValue: Value = getLastValue(output);
+    if (!lastValue || isOperation(lastValue)) return "negative";
+    return "minus";
+  })();
+
+  return [...output, insert];
 }
 
 export function validateInput(input: Input, output: Output): boolean {
@@ -199,10 +262,7 @@ function validateDecimalInput(decimal: ".", output: Output): boolean {
   throw Error(`Invalid last value: ${lastValue}`);
 }
 
-export function getOperationIndices(output: Output): number[] {
-  return output.flatMap((value, index) => (isOperation(value) ? index : []));
-}
-
+/** @internal */
 export function getLastTerm(output: Output): Output {
   const lastOperationIndex: number = output.findLastIndex((value) => {
     return isOperation(value);
@@ -212,6 +272,7 @@ export function getLastTerm(output: Output): Output {
   return output.slice(lastOperationIndex + 1);
 }
 
+/** @internal */
 export function getLastValue(output: Output): Value {
   return output.slice(-1)[0];
 }

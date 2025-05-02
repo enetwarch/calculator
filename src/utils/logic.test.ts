@@ -1,9 +1,10 @@
 import {
   type Output,
+  calculateOperation,
   controlOutput,
   getLastTerm,
   getLastValue,
-  getOperationIndices,
+  insertInput,
   parseOutput,
   parseTerm,
   roundTerm,
@@ -46,22 +47,6 @@ describe(getLastTerm.name, () => {
   it("should return an empty array if the last term is empty", () => {
     expect(getLastTerm(["1", "plus"])).toEqual([]);
     expect(getLastTerm(["6", "9", "4", "2", "0", "dividedBy"])).toEqual([]);
-  });
-});
-
-describe(getOperationIndices.name, () => {
-  it("should return an empty array if there are no operations", () => {
-    expect(getOperationIndices(["1", "0"])).toEqual([]);
-  });
-
-  it("should return an array with a single number if there is an operation", () => {
-    expect(getOperationIndices(["1", "plus", "1"])).toEqual([1]);
-    expect(getOperationIndices(["6", "9", "dividedBy", "4", "2", "0"])).toEqual([2]);
-  });
-
-  it("should return an array with multiple numbers if there are multiple operations", () => {
-    expect(getOperationIndices(["1", "plus", "2", "minus", "3"])).toEqual([1, 3]);
-    expect(getOperationIndices(["2", "dividedBy", "7", "times", "2", "minus"])).toEqual([1, 3, 5]);
   });
 });
 
@@ -143,6 +128,40 @@ describe(validateInput.name, () => {
       expect(validateInput("plus", ["1"])).toBe(true);
       expect(validateInput("minus", ["1", "9"])).toBe(true);
     });
+  });
+});
+
+describe(insertInput.name, () => {
+  it("should return the same output if the input is not valid", () => {
+    expect(insertInput("plus", ["negative", "1", "plus"])).toEqual(["negative", "1", "plus"]);
+  });
+
+  it("should correctly insert digits", () => {
+    expect(insertInput("3", ["1", "2"])).toEqual(["1", "2", "3"]);
+    expect(insertInput("0", ["6", "9", ".", "4", "2"])).toEqual(["6", "9", ".", "4", "2", "0"]);
+  });
+
+  it("should not insert decimals if it is the first character of the term", () => {
+    expect(insertInput(".", [])).toEqual([]);
+    expect(insertInput(".", ["1", "plus"])).toEqual(["1", "plus"]);
+  });
+
+  it("should only insert decimals if the current term doesn't have one", () => {
+    expect(insertInput(".", ["1"])).toEqual(["1", "."]);
+    expect(insertInput(".", ["1", ".", "3"])).toEqual(["1", ".", "3"]);
+    expect(insertInput(".", ["1", "plus", "0", ".", "2"])).toEqual(["1", "plus", "0", ".", "2"]);
+  });
+
+  it("should return negative if the output is empty", () => {
+    expect(insertInput("minus", [])).toEqual(["negative"]);
+  });
+
+  it("should insert negative to the output if it is pointed towards the number", () => {
+    expect(insertInput("minus", ["1", "plus"])).toEqual(["1", "plus", "negative"]);
+  });
+
+  it("should not insert operations if there is last character is already one", () => {
+    expect(insertInput("plus", ["1", "plus"])).toEqual(["1", "plus"]);
   });
 });
 
@@ -340,6 +359,16 @@ describe(roundTerm.name, () => {
   });
 });
 
+describe(calculateOperation.name, () => {
+  it("should reduce the operation based on the operation index given", () => {
+    expect(calculateOperation(["1", "plus", "6", "dividedBy", "3"], 3)).toEqual(["1", "plus", "2"]);
+  });
+
+  it("should return Error when there is at least one error value in the output", () => {
+    expect(calculateOperation(["Error", "1", "2", "plus", "3", "4"], 3)).toEqual(["Error"]);
+  });
+});
+
 describe(controlOutput.name, () => {
   describe(`"allClear" control`, () => {
     it("should return an empty array", () => {
@@ -390,7 +419,7 @@ describe(controlOutput.name, () => {
       expect(controlOutput("equals", ["5", "0", "dividedBy", "8"])).toEqual(["6", ".", "2", "5"]);
     });
 
-    it(`should correclty return 2 decimal places at most if there are remainders using the "dividedBy" operator`, () => {
+    it(`should correctly return 2 decimal places at most if there are remainders using the "dividedBy" operator`, () => {
       expect(controlOutput("equals", ["4", "2", "0", "dividedBy", "6", "9"])).toEqual(["6", ".", "0", "9"]);
     });
 
@@ -416,7 +445,7 @@ describe(controlOutput.name, () => {
       expect(controlOutput("equals", ["4", "times", "3", "dividedBy", "9"])).toEqual(["1", ".", "3", "3"]);
     });
 
-    it.skip("should work on all combinations of arithmetic expressions while following the PEMDAS rule", () => {
+    it("should work on all combinations of arithmetic expressions while following the PEMDAS precedence rule", () => {
       const output: Output = ["4", "times", "3", "plus", "7", "dividedBy", "2", "minus", "8"];
       expect(controlOutput("equals", output)).toEqual(["7", ".", "5"]);
     });
