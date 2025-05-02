@@ -14,29 +14,13 @@ type Input = Digit | Operation | Sign;
 type Value = Input | "Infinity" | "Error";
 export type Output = Value[];
 
-const signLiterals = ["-"] as const;
-type SignLiteral = (typeof signLiterals)[number];
-const signLiteralMap: Record<Sign, SignLiteral> = Object.freeze({
-  negative: "-",
-});
-const signSemanticMap: Record<SignLiteral, Sign> = Object.freeze({
-  "-": "negative",
-});
+export function controlOutput(control: Control, output: Output): Output {
+  if (control === "allClear") return [];
+  if (control === "clearEntry") return output.slice(0, -1);
+  if (control === "equals") return calculateOutput(output);
 
-const operationLiterals = ["+", "-", "×", "÷"] as const;
-type OperationLiteral = (typeof operationLiterals)[number];
-const operationLiteralMap: Record<Operation, OperationLiteral> = Object.freeze({
-  plus: "+",
-  minus: "-",
-  times: "×",
-  dividedBy: "÷",
-});
-const operationSemanticMap: Record<OperationLiteral, Operation> = Object.freeze({
-  "+": "plus",
-  "-": "minus",
-  "×": "times",
-  "÷": "dividedBy",
-});
+  throw Error(`Invalid control or output: ${control}, ${output}`);
+}
 
 type OperationFunction = (x: number, y: number) => number;
 const operationFunctionMap: Record<Operation, OperationFunction> = Object.freeze({
@@ -45,14 +29,6 @@ const operationFunctionMap: Record<Operation, OperationFunction> = Object.freeze
   times: (x: number, y: number) => x * y,
   dividedBy: (x: number, y: number) => x / y,
 });
-
-export function controlOutput(control: Control, output: Output): Output {
-  if (control === "allClear") return [];
-  if (control === "clearEntry") return output.slice(0, -1);
-  if (control === "equals") return calculateOutput(output);
-
-  throw Error(`Invalid control or output: ${control}, ${output}`);
-}
 
 function calculateOutput(output: Output): Output {
   if (output.every((value) => !isOperation(value))) return output;
@@ -140,6 +116,30 @@ export function calculateOperation(output: Output, operationIndex: number): Outp
   });
 }
 
+const signLiterals = ["-"] as const;
+type SignLiteral = (typeof signLiterals)[number];
+const signLiteralMap: Record<Sign, SignLiteral> = Object.freeze({
+  negative: "-",
+});
+const signSemanticMap: Record<SignLiteral, Sign> = Object.freeze({
+  "-": "negative",
+});
+
+const operationLiterals = ["+", "-", "×", "÷"] as const;
+type OperationLiteral = (typeof operationLiterals)[number];
+const operationLiteralMap: Record<Operation, OperationLiteral> = Object.freeze({
+  plus: "+",
+  minus: "-",
+  times: "×",
+  dividedBy: "÷",
+});
+const operationSemanticMap: Record<OperationLiteral, Operation> = Object.freeze({
+  "+": "plus",
+  "-": "minus",
+  "×": "times",
+  "÷": "dividedBy",
+});
+
 /** @internal */
 export function roundTerm(output: Output, decimalPlaces = 2): number {
   if (!output.every((value) => isDigit(value) || isSign(value))) {
@@ -186,10 +186,12 @@ export function parseOutput(output: string): Output {
   });
 }
 
+/** @internal */
 export function stringifyOutput(output: Output): string {
   return output.map((value) => stringifyValue(value)).join("");
 }
 
+/** @internal */
 export function stringifyValue(value: Value): string {
   if (isDigit(value)) return value;
   if (isSign(value)) return signLiteralMap[value];
@@ -214,18 +216,19 @@ export function insertInput(input: Input, output: Output, isValid = false): Outp
   return [...output, insert];
 }
 
+/** @internal */
 export function validateInput(input: Input, output: Output): boolean {
   if (isOperation(input)) return validateOperationInput(input, output);
   if (isDigit(input)) return validateDigitInput(input, output);
 
-  throw Error(`Invalid input and output: ${input}, ${output}`);
+  return false;
 }
 
 function validateDigitInput(digit: Digit, output: Output): boolean {
   if (isDecimal(digit)) return validateDecimalInput(digit, output);
   if (isDigit(digit)) return true;
 
-  throw Error(`Invalid digit and output: ${digit}, ${output}`);
+  return false;
 }
 
 function validateOperationInput(operation: Operation, output: Output): boolean {
@@ -242,7 +245,7 @@ function validateOperationInput(operation: Operation, output: Output): boolean {
   if (isOperation(lastValue) && operation === "minus") return true;
   if (isDigit(lastValue)) return true;
 
-  throw Error(`Invalid operation and last value: ${operation}, ${lastValue}`);
+  return false;
 }
 
 function validateDecimalInput(decimal: ".", output: Output): boolean {
@@ -255,11 +258,12 @@ function validateDecimalInput(decimal: ".", output: Output): boolean {
 
   const lastValue: Value = getLastValue(output);
   if (!lastValue) return false;
+
   if (isOperation(lastValue)) return false;
   if (isSign(lastValue)) return false;
-
   if (isDigit(lastValue)) return true;
-  throw Error(`Invalid last value: ${lastValue}`);
+
+  return false;
 }
 
 /** @internal */

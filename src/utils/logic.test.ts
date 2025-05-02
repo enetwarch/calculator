@@ -21,11 +21,17 @@ describe(getLastValue.name, () => {
   it("should return the last element in the output array", () => {
     expect(getLastValue(["2", "0"])).toBe("0");
     expect(getLastValue(["3", "2", "1"])).toBe("1");
+    expect(getLastValue(["1", "."])).toBe(".");
   });
 
   it("should return an expression if that is the last element in the array", () => {
     expect(getLastValue(["negative"])).toBe("negative");
     expect(getLastValue(["1", "times"])).toBe("times");
+  });
+
+  it("should return any value type as long as it is the last element", () => {
+    expect(getLastValue(["negative", "Infinity"])).toBe("Infinity");
+    expect(getLastValue(["1", "Error"])).toBe("Error");
   });
 });
 
@@ -51,8 +57,8 @@ describe(getLastTerm.name, () => {
 });
 
 describe(validateInput.name, () => {
-  describe("digit input", () => {
-    describe("decimal input", () => {
+  describe("digit", () => {
+    describe("decimal", () => {
       it("should return false if the first input is a decimal", () => {
         expect(validateInput(".", [])).toBe(false);
       });
@@ -90,7 +96,7 @@ describe(validateInput.name, () => {
     });
   });
 
-  describe("operation input", () => {
+  describe("operation", () => {
     it("should return false if the last character is a decimal", () => {
       expect(validateInput("plus", ["1", "."])).toBe(false);
       expect(validateInput("times", ["6", "9", "."])).toBe(false);
@@ -160,7 +166,12 @@ describe(insertInput.name, () => {
     expect(insertInput("minus", ["1", "plus"])).toEqual(["1", "plus", "negative"]);
   });
 
-  it("should not insert operations if there is last character is already one", () => {
+  it("should not insert operations if there is last character is already an operation", () => {
+    expect(insertInput("plus", ["1", "plus"])).toEqual(["1", "plus"]);
+  });
+
+  it("should skip validation if the third argument is passed as true", () => {
+    expect(insertInput("plus", ["1", "plus"], true)).toEqual(["1", "plus", "plus"]);
     expect(insertInput("plus", ["1", "plus"])).toEqual(["1", "plus"]);
   });
 });
@@ -370,14 +381,14 @@ describe(calculateOperation.name, () => {
 });
 
 describe(controlOutput.name, () => {
-  describe(`"allClear" control`, () => {
+  describe("allClear", () => {
     it("should return an empty array", () => {
       expect(controlOutput("allClear", ["1", "2", "3"])).toEqual([]);
       expect(controlOutput("allClear", ["6", "times", "9"])).toEqual([]);
     });
   });
 
-  describe(`"clearEntry" control`, () => {
+  describe("clearEntry", () => {
     it("should return an output without the previous last character", () => {
       expect(controlOutput("clearEntry", ["1", "2", "3"])).toEqual(["1", "2"]);
       expect(controlOutput("clearEntry", ["6", "times", "9"])).toEqual(["6", "times"]);
@@ -393,7 +404,7 @@ describe(controlOutput.name, () => {
     });
   });
 
-  describe(`"equals" control`, () => {
+  describe("equals", () => {
     it("should return the same output if there are no operations", () => {
       expect(controlOutput("equals", ["1"])).toEqual(["1"]);
       expect(controlOutput("equals", ["negative", "6", "9"])).toEqual(["negative", "6", "9"]);
@@ -445,9 +456,46 @@ describe(controlOutput.name, () => {
       expect(controlOutput("equals", ["4", "times", "3", "dividedBy", "9"])).toEqual(["1", ".", "3", "3"]);
     });
 
-    it("should work on all combinations of arithmetic expressions while following the PEMDAS precedence rule", () => {
-      const output: Output = ["4", "times", "3", "plus", "7", "dividedBy", "2", "minus", "8"];
-      expect(controlOutput("equals", output)).toEqual(["7", ".", "5"]);
+    describe("precedence", () => {
+      it("should correctly evaluate multiplication before addition", () => {
+        const output: Output = ["2", "plus", "3", "times", "4"];
+        expect(controlOutput("equals", output)).toEqual(["1", "4"]);
+      });
+
+      it("should correctly evaluate multiplication before subtraction", () => {
+        const output: Output = ["6", "2", "minus", "3", "times", "4"];
+        expect(controlOutput("equals", output)).toEqual(["5", "0"]);
+      });
+
+      it("should correctly evaluate division before addition", () => {
+        const output: Output = ["8", "plus", "6", "dividedBy", "2"];
+        expect(controlOutput("equals", output)).toEqual(["1", "1"]);
+      });
+
+      it("should correctly evaluate division before subtraction", () => {
+        const output: Output = ["8", "minus", "6", "dividedBy", "2"];
+        expect(controlOutput("equals", output)).toEqual(["5"]);
+      });
+
+      it("should be able to return a negative result when required", () => {
+        const output: Output = ["2", "minus", "5", "times", "2"];
+        expect(controlOutput("equals", output)).toEqual(["negative", "8"]);
+      });
+
+      it("should be able to return a float result when required", () => {
+        const output: Output = ["5", "dividedBy", "2"];
+        expect(controlOutput("equals", output)).toEqual(["2", ".", "5"]);
+      });
+
+      it("should correctly compute multiple operations with precedence", () => {
+        const output: Output = ["6", "plus", "3", "times", "2", "minus", "4"];
+        expect(controlOutput("equals", output)).toEqual(["8"]);
+      });
+
+      it("should correctly evaluate all combinations of arithmetic expressions", () => {
+        const output: Output = ["4", "times", "3", "plus", "7", "dividedBy", "2", "minus", "8"];
+        expect(controlOutput("equals", output)).toEqual(["7", ".", "5"]);
+      });
     });
   });
 });
