@@ -12,9 +12,49 @@ type Control = (typeof controls)[number];
 
 type Input = Digit | Operation | Sign;
 type Value = Input | "Infinity" | "Error";
-export type Output = Value[];
+export type ParsedOutput = Value[];
 
-export function controlOutput(control: Control, output: Output): Output {
+type Action = Input | Control;
+export type Output = {
+  parsed: ParsedOutput;
+  stringified: string;
+};
+
+/** @public */
+export function updateCalculator(action: Action, output: Output, outputAreEqual = false): Output {
+  if (!outputAreEqual && output.stringified !== stringifyOutput(output.parsed)) {
+    throw Error(`Stringified and parsed output are not equal: ${output.stringified}, ${output.parsed}`);
+  }
+
+  const edgeValues: Value[] = ["Infinity", "Error"];
+  if (output.parsed.find((value) => edgeValues.includes(value))) {
+    const clearedOutput: Output = controlCalculator("allClear", output);
+    return updateCalculator(action, clearedOutput, true);
+  }
+
+  if (!isControl(action) && !validateInput(action, output.parsed)) return output;
+  if (isInput(action)) return inputCalculator(action, output, true);
+  if (isControl(action)) return controlCalculator(action, output);
+
+  throw Error(`Invalid action and output: ${action}, ${output}`);
+}
+
+function inputCalculator(input: Input, output: Output, isValid = false): Output {
+  const parsed: ParsedOutput = insertInput(input, output.parsed, isValid);
+  const stringified: string = `${output.stringified}${stringifyValue(input)}`;
+
+  return { parsed, stringified };
+}
+
+function controlCalculator(control: Control, output: Output): Output {
+  const parsed: ParsedOutput = controlOutput(control, output.parsed);
+  const stringified: string = stringifyOutput(parsed);
+
+  return { parsed, stringified };
+}
+
+/** @internal */
+export function controlOutput(control: Control, output: ParsedOutput): ParsedOutput {
   if (control === "allClear") return [];
   if (control === "clearEntry") return output.slice(0, -1);
   if (control === "equals") return calculateOutput(output);
@@ -24,21 +64,21 @@ export function controlOutput(control: Control, output: Output): Output {
 
 type OperationFunction = (x: number, y: number) => number;
 const operationFunctionMap: Record<Operation, OperationFunction> = Object.freeze({
-  plus: (x: number, y: number) => x + y,
-  minus: (x: number, y: number) => x - y,
-  times: (x: number, y: number) => x * y,
-  dividedBy: (x: number, y: number) => x / y,
+  plus: (x: number, y: number): number => x + y,
+  minus: (x: number, y: number): number => x - y,
+  times: (x: number, y: number): number => x * y,
+  dividedBy: (x: number, y: number): number => x / y,
 });
 
-function calculateOutput(output: Output): Output {
+function calculateOutput(output: ParsedOutput): ParsedOutput {
   if (output.every((value) => !isOperation(value))) return output;
 
-  const calculated: Output = ((): Output => {
+  const calculated: ParsedOutput = ((): ParsedOutput => {
     // PEMDAS Precedence (Parentheses, Exponents, Multiplication, Division, Addition, and Subtraction)
     const MD: Operation[] = ["times", "dividedBy"];
     const AS: Operation[] = ["plus", "minus"];
 
-    const calculator = (precedence: Operation[], output: Output): Output => {
+    const calculate = (precedence: Operation[], output: ParsedOutput): ParsedOutput => {
       const operationIndex: number = output.findIndex((value) => {
         if (!isOperation(value)) return false;
         return precedence.includes(value);
@@ -46,12 +86,12 @@ function calculateOutput(output: Output): Output {
 
       if (operationIndex === -1) return output;
 
-      const calculated: Output = calculateOperation(output, operationIndex);
-      return calculator(precedence, calculated);
+      const calculated: ParsedOutput = calculateOperation(output, operationIndex);
+      return calculate(precedence, calculated);
     };
 
-    const reducedMD: Output = calculator(MD, output);
-    const reducedAD: Output = calculator(AS, reducedMD);
+    const reducedMD: ParsedOutput = calculate(MD, output);
+    const reducedAD: ParsedOutput = calculate(AS, reducedMD);
 
     return reducedAD;
   })();
@@ -63,7 +103,7 @@ function calculateOutput(output: Output): Output {
 }
 
 /** @internal */
-export function calculateOperation(output: Output, operationIndex: number): Output {
+export function calculateOperation(output: ParsedOutput, operationIndex: number): ParsedOutput {
   if (output.includes("Error")) return ["Error"];
 
   const operationStartingIndex: number =
@@ -100,7 +140,7 @@ export function calculateOperation(output: Output, operationIndex: number): Outp
     throw Error(`Not an operation: ${operation}`);
   })();
 
-  const calculated: Output = ((): Output => {
+  const calculated: ParsedOutput = ((): ParsedOutput => {
     const result: number = operationFunction(x, y);
     if (operation !== "dividedBy" || !Number.isNaN(result)) {
       return parseOutput(result.toString());
@@ -141,7 +181,7 @@ const operationSemanticMap: Record<OperationLiteral, Operation> = Object.freeze(
 });
 
 /** @internal */
-export function roundTerm(output: Output, decimalPlaces = 2): number {
+export function roundTerm(output: ParsedOutput, decimalPlaces = 2): number {
   if (!output.every((value) => isDigit(value) || isSign(value))) {
     throw Error(`Not a term: ${output}`);
   }
@@ -151,7 +191,7 @@ export function roundTerm(output: Output, decimalPlaces = 2): number {
 }
 
 /** @internal */
-export function parseTerm(output: Output, start = 0, end = output.length): number {
+export function parseTerm(output: ParsedOutput, start = 0, end = output.length): number {
   const stringifiedTerm: string = stringifyOutput(output.slice(start, end));
   const parsedTerm: number = Number.parseFloat(stringifiedTerm);
 
@@ -167,7 +207,7 @@ export function parseTerm(output: Output, start = 0, end = output.length): numbe
 }
 
 /** @internal */
-export function parseOutput(output: string): Output {
+export function parseOutput(output: string): ParsedOutput {
   return [...output].flatMap((value, index, array) => {
     if (isDigit(value)) return value;
     if (isSignLiteral(value)) {
@@ -187,7 +227,7 @@ export function parseOutput(output: string): Output {
 }
 
 /** @internal */
-export function stringifyOutput(output: Output): string {
+export function stringifyOutput(output: ParsedOutput): string {
   return output.map((value) => stringifyValue(value)).join("");
 }
 
@@ -202,7 +242,7 @@ export function stringifyValue(value: Value): string {
 }
 
 /** @internal */
-export function insertInput(input: Input, output: Output, isValid = false): Output {
+export function insertInput(input: Input, output: ParsedOutput, isValid = false): ParsedOutput {
   if (!isValid && !validateInput(input, output)) return output;
 
   const insert: Input = ((): Input => {
@@ -217,21 +257,21 @@ export function insertInput(input: Input, output: Output, isValid = false): Outp
 }
 
 /** @internal */
-export function validateInput(input: Input, output: Output): boolean {
+export function validateInput(input: Input, output: ParsedOutput): boolean {
   if (isOperation(input)) return validateOperationInput(input, output);
   if (isDigit(input)) return validateDigitInput(input, output);
 
   return false;
 }
 
-function validateDigitInput(digit: Digit, output: Output): boolean {
+function validateDigitInput(digit: Digit, output: ParsedOutput): boolean {
   if (isDecimal(digit)) return validateDecimalInput(digit, output);
   if (isDigit(digit)) return true;
 
   return false;
 }
 
-function validateOperationInput(operation: Operation, output: Output): boolean {
+function validateOperationInput(operation: Operation, output: ParsedOutput): boolean {
   const lastValue: Value = getLastValue(output);
 
   if (isDecimal(lastValue)) return false;
@@ -248,10 +288,10 @@ function validateOperationInput(operation: Operation, output: Output): boolean {
   return false;
 }
 
-function validateDecimalInput(decimal: ".", output: Output): boolean {
+function validateDecimalInput(decimal: ".", output: ParsedOutput): boolean {
   if (output.length < 1) return false;
 
-  const lastTerm: Output = getLastTerm(output);
+  const lastTerm: ParsedOutput = getLastTerm(output);
   for (const value of lastTerm) {
     if (value === decimal) return false;
   }
@@ -267,7 +307,7 @@ function validateDecimalInput(decimal: ".", output: Output): boolean {
 }
 
 /** @internal */
-export function getLastTerm(output: Output): Output {
+export function getLastTerm(output: ParsedOutput): ParsedOutput {
   const lastOperationIndex: number = output.findLastIndex((value) => {
     return isOperation(value);
   });
@@ -277,8 +317,12 @@ export function getLastTerm(output: Output): Output {
 }
 
 /** @internal */
-export function getLastValue(output: Output): Value {
+export function getLastValue(output: ParsedOutput): Value {
   return output.slice(-1)[0];
+}
+
+function isInput(value: string): value is Input {
+  return isDigit(value) || isOperation(value) || isSign(value);
 }
 
 function isDigit(value: string): value is Digit {
@@ -295,6 +339,10 @@ function isSign(value: string): value is Sign {
 
 function isOperation(value: string): value is Operation {
   return operations.includes(value as Operation);
+}
+
+function isControl(value: string): value is Control {
+  return controls.includes(value as Control);
 }
 
 function isSignLiteral(value: string): value is SignLiteral {

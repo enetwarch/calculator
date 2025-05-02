@@ -1,5 +1,6 @@
 import {
   type Output,
+  type ParsedOutput,
   calculateOperation,
   controlOutput,
   getLastTerm,
@@ -10,8 +11,145 @@ import {
   roundTerm,
   stringifyOutput,
   stringifyValue,
+  updateCalculator,
   validateInput,
 } from "@/utils/logic";
+
+describe(updateCalculator.name, () => {
+  it("should throw an error if parsed and stringified are not equal", () => {
+    const output: Output = { parsed: ["6", "9"], stringified: "420" };
+    expect(() => updateCalculator(".", output)).toThrow();
+  });
+
+  describe("digit", () => {
+    it("should correctly insert a digit unconditionally", () => {
+      const output: Output = { parsed: ["6", "9", ".", "4", "2"], stringified: "69.42" };
+      const result: Output = updateCalculator("0", output);
+
+      expect(result.parsed).toEqual(["6", "9", ".", "4", "2", "0"]);
+      expect(result.stringified).toBe("69.420");
+    });
+
+    it("should insert a decimal when valid", () => {
+      const output: Output = { parsed: ["6", "9"], stringified: "69" };
+      const result: Output = updateCalculator(".", output);
+
+      expect(result.parsed).toEqual(["6", "9", "."]);
+      expect(result.stringified).toBe("69.");
+    });
+
+    it("should not insert a decimal when invalid", () => {
+      const output: Output = { parsed: ["6", "9", ".", "4", "2"], stringified: "69.42" };
+      const result: Output = updateCalculator(".", output);
+
+      expect(result.parsed).toEqual(["6", "9", ".", "4", "2"]);
+      expect(result.stringified).toBe("69.42");
+    });
+  });
+
+  describe("operation", () => {
+    it("should correctly insert a plus operation", () => {
+      const output: Output = { parsed: ["1", "2", "3"], stringified: "123" };
+      const result: Output = updateCalculator("plus", output);
+
+      expect(result.parsed).toEqual(["1", "2", "3", "plus"]);
+      expect(result.stringified).toBe("123+");
+    });
+
+    it("should correctly insert a minus operation", () => {
+      const output: Output = { parsed: ["5", "7", "1"], stringified: "571" };
+      const result: Output = updateCalculator("minus", output);
+
+      expect(result.parsed).toEqual(["5", "7", "1", "minus"]);
+      expect(result.stringified).toBe("571-");
+    });
+
+    it("should correctly insert a times operation", () => {
+      const output: Output = { parsed: ["8", "2", "7"], stringified: "827" };
+      const result: Output = updateCalculator("times", output);
+
+      expect(result.parsed).toEqual(["8", "2", "7", "times"]);
+      expect(result.stringified).toBe("827×");
+    });
+
+    it("should correctly insert a dividedBy operation", () => {
+      const output: Output = { parsed: ["9", "1", "3"], stringified: "913" };
+      const result: Output = updateCalculator("dividedBy", output);
+
+      expect(result.parsed).toEqual(["9", "1", "3", "dividedBy"]);
+      expect(result.stringified).toBe("913÷");
+    });
+
+    it("should correctly insert a negative sign", () => {
+      const output: Output = { parsed: ["2", "4", "5", "plus"], stringified: "245+" };
+      const result: Output = updateCalculator("minus", output);
+
+      expect(result.parsed).toEqual(["2", "4", "5", "plus", "negative"]);
+      expect(result.stringified).toBe("245+-");
+    });
+
+    it("should not insert an operation if it is invalid", () => {
+      const output: Output = { parsed: ["3", "2", "1", "plus"], stringified: "321+" };
+      const result: Output = updateCalculator("plus", output);
+
+      expect(result.parsed).toEqual(["3", "2", "1", "plus"]);
+      expect(result.stringified).toBe("321+");
+    });
+  });
+
+  describe("control", () => {
+    it("should correctly perform all clear which clears the entire output", () => {
+      const output: Output = { parsed: ["1", "2", "3"], stringified: "123" };
+      const result: Output = updateCalculator("allClear", output);
+
+      expect(result.parsed).toEqual([]);
+      expect(result.stringified).toBe("");
+    });
+
+    it("should correctly perform clear entry which clears the last character of the output", () => {
+      const output: Output = { parsed: ["1", "2", "3"], stringified: "123" };
+      const result: Output = updateCalculator("clearEntry", output);
+
+      expect(result.parsed).toEqual(["1", "2"]);
+      expect(result.stringified).toBe("12");
+    });
+
+    it("should correctly calculate the output with the equals control", () => {
+      const output: Output = {
+        parsed: ["1", "2", "3", "plus", "4", "minus", "2", "dividedBy", "7", "times", "8"],
+        stringified: "123+4-2÷7×8",
+      };
+
+      const result: Output = updateCalculator("equals", output);
+      expect(result.parsed).toEqual(["1", "2", "4", ".", "7", "1"]);
+      expect(result.stringified).toBe("124.71");
+    });
+
+    it("should return the same output if there are no operations with the equals control", () => {
+      const output: Output = { parsed: ["1", "2", "3"], stringified: "123" };
+      const result: Output = updateCalculator("equals", output);
+
+      expect(result.parsed).toEqual(["1", "2", "3"]);
+      expect(result.stringified).toBe("123");
+    });
+
+    it("should do a clear all on the output if there is an Infinity value before processing the action", () => {
+      const output: Output = { parsed: ["negative", "Infinity"], stringified: "-Infinity" };
+      const result: Output = updateCalculator("1", output);
+
+      expect(result.parsed).toEqual(["1"]);
+      expect(result.stringified).toBe("1");
+    });
+
+    it("should do a clear all on the output if there is an Error value before processing the action", () => {
+      const output: Output = { parsed: ["Error", "4", "0", "4"], stringified: "Error404" };
+      const result: Output = updateCalculator("minus", output);
+
+      expect(result.parsed).toEqual(["negative"]);
+      expect(result.stringified).toBe("-");
+    });
+  });
+});
 
 describe(getLastValue.name, () => {
   it("should return undefined if the output is empty", () => {
@@ -458,42 +596,42 @@ describe(controlOutput.name, () => {
 
     describe("precedence", () => {
       it("should correctly evaluate multiplication before addition", () => {
-        const output: Output = ["2", "plus", "3", "times", "4"];
+        const output: ParsedOutput = ["2", "plus", "3", "times", "4"];
         expect(controlOutput("equals", output)).toEqual(["1", "4"]);
       });
 
       it("should correctly evaluate multiplication before subtraction", () => {
-        const output: Output = ["6", "2", "minus", "3", "times", "4"];
+        const output: ParsedOutput = ["6", "2", "minus", "3", "times", "4"];
         expect(controlOutput("equals", output)).toEqual(["5", "0"]);
       });
 
       it("should correctly evaluate division before addition", () => {
-        const output: Output = ["8", "plus", "6", "dividedBy", "2"];
+        const output: ParsedOutput = ["8", "plus", "6", "dividedBy", "2"];
         expect(controlOutput("equals", output)).toEqual(["1", "1"]);
       });
 
       it("should correctly evaluate division before subtraction", () => {
-        const output: Output = ["8", "minus", "6", "dividedBy", "2"];
+        const output: ParsedOutput = ["8", "minus", "6", "dividedBy", "2"];
         expect(controlOutput("equals", output)).toEqual(["5"]);
       });
 
       it("should be able to return a negative result when required", () => {
-        const output: Output = ["2", "minus", "5", "times", "2"];
+        const output: ParsedOutput = ["2", "minus", "5", "times", "2"];
         expect(controlOutput("equals", output)).toEqual(["negative", "8"]);
       });
 
       it("should be able to return a float result when required", () => {
-        const output: Output = ["5", "dividedBy", "2"];
+        const output: ParsedOutput = ["5", "dividedBy", "2"];
         expect(controlOutput("equals", output)).toEqual(["2", ".", "5"]);
       });
 
       it("should correctly compute multiple operations with precedence", () => {
-        const output: Output = ["6", "plus", "3", "times", "2", "minus", "4"];
+        const output: ParsedOutput = ["6", "plus", "3", "times", "2", "minus", "4"];
         expect(controlOutput("equals", output)).toEqual(["8"]);
       });
 
       it("should correctly evaluate all combinations of arithmetic expressions", () => {
-        const output: Output = ["4", "times", "3", "plus", "7", "dividedBy", "2", "minus", "8"];
+        const output: ParsedOutput = ["4", "times", "3", "plus", "7", "dividedBy", "2", "minus", "8"];
         expect(controlOutput("equals", output)).toEqual(["7", ".", "5"]);
       });
     });
