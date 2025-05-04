@@ -18,6 +18,7 @@ const listenerConfig: ListenerConfig[] = [
   { id: "seven", action: "7", events: ["click", "keydown"], keys: ["7"] },
   { id: "eight", action: "8", events: ["click", "keydown"], keys: ["8"] },
   { id: "nine", action: "9", events: ["click", "keydown"], keys: ["9"] },
+  { id: "decimal", action: ".", events: ["click", "keydown"], keys: ["."] },
   { id: "add", action: "plus", events: ["click", "keydown"], keys: ["+"] },
   { id: "subtract", action: "minus", events: ["click", "keydown"], keys: ["-"] },
   { id: "multiply", action: "times", events: ["click", "keydown"], keys: ["*"] },
@@ -27,11 +28,30 @@ const listenerConfig: ListenerConfig[] = [
   { id: "allClear", action: "allClear", events: ["click", "keydown"], keys: ["Escape"] },
 ] as const;
 
+type MouseEventName = {
+  [K in keyof HTMLElementEventMap]: HTMLElementEventMap[K] extends MouseEvent ? K : never;
+}[keyof HTMLElementEventMap];
+
+type KeyboardEventName = {
+  [K in keyof HTMLElementEventMap]: HTMLElementEventMap[K] extends KeyboardEvent ? K : never;
+}[keyof HTMLElementEventMap];
+
+// Add more relevant events in the arrays if they exist in the config
+const mouseEvents: MouseEventName[] = ["click"] as const;
+const keyboardEvents: KeyboardEventName[] = ["keydown"] as const;
+
+function isMouseEventName(value: keyof HTMLElementEventMap): value is MouseEventName {
+  return mouseEvents.includes(value as MouseEventName);
+}
+
+function isKeyboardEventName(value: keyof HTMLElementEventMap): value is KeyboardEventName {
+  return keyboardEvents.includes(value as KeyboardEventName);
+}
+
 /** @public */
 export function initializeCalculator(savedOutput: Output, storageKey = "output"): void {
   let output: Output = savedOutput;
   const outputElement: HTMLElement = getElementById("output");
-  const calculatorElement: HTMLElement = getElementById("calculator");
 
   const setOutput = (newOutput: Output): void => {
     output = newOutput;
@@ -52,15 +72,15 @@ export function initializeCalculator(savedOutput: Output, storageKey = "output")
 
     for (const event of events) {
       const node: Node = ((): Node => {
-        if (event === "click") return calculatorElement;
-        if (event === "keydown") return document;
+        if (isMouseEventName(event)) return element;
+        if (isKeyboardEventName(event)) return document;
 
         throw Error(`Unknown event: ${event}`);
       })();
 
       const eventListener: EventListener = ((): EventListener => {
-        if (event === "click") return getMouseEventListener(element, callback);
-        if (event === "keydown") return getKeyboardEventListener(keys, callback);
+        if (isMouseEventName(event)) return getMouseEventListener(element, callback);
+        if (isKeyboardEventName(event)) return getKeyboardEventListener(keys, callback);
 
         throw Error(`Unknown event: ${event}`);
       })();
