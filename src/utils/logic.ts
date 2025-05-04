@@ -14,7 +14,7 @@ type Input = Digit | Operation | Sign;
 type Value = Input | "Infinity" | "Error";
 export type ParsedOutput = Value[];
 
-type Action = Input | Control;
+export type Action = Input | Control;
 export type Output = {
   parsed: ParsedOutput;
   stringified: string;
