@@ -48,9 +48,23 @@ function inputCalculator(input: Input, output: Output, isValid = false): Output 
 
 function controlCalculator(control: Control, output: Output): Output {
   const parsed: ParsedOutput = controlOutput(control, output.parsed);
-  const stringified: string = stringifyOutput(parsed);
+  const stringified: string = ((): string => {
+    if (control === "allClear") return stringifyOutput(parsed);
+    if (control === "equals") return stringifyOutput(parsed);
+    if (control === "clearEntry") return stringifyClearEntry(output.parsed, output.stringified);
+
+    throw Error(`Unknown control: ${control}`);
+  })();
 
   return { parsed, stringified };
+}
+
+function stringifyClearEntry(parsed: ParsedOutput, stringified: string): string {
+  const lastValue: Value = getLastValue(parsed);
+  const valueString: string = stringifyValue(lastValue);
+  const valueIndex: number = stringified.lastIndexOf(valueString);
+
+  return `${stringified.slice(0, valueIndex)}${stringified.slice(valueIndex + valueString.length)}`;
 }
 
 /** @internal */
@@ -72,6 +86,12 @@ const operationFunctionMap: Record<Operation, OperationFunction> = Object.freeze
 
 function calculateOutput(output: ParsedOutput): ParsedOutput {
   if (output.every((value) => !isOperation(value))) return output;
+
+  const lastValue: Value = getLastValue(output);
+  if (isSign(lastValue) || isOperation(lastValue)) {
+    const lastValueClearedOutput: ParsedOutput = controlOutput("clearEntry", output);
+    return calculateOutput(lastValueClearedOutput);
+  }
 
   const calculated: ParsedOutput = ((): ParsedOutput => {
     // PEMDAS Precedence (Parentheses, Exponents, Multiplication, Division, Addition, and Subtraction)

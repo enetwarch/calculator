@@ -148,6 +148,30 @@ describe(updateCalculator.name, () => {
       expect(result.parsed).toEqual(["negative"]);
       expect(result.stringified).toBe("-");
     });
+
+    it("should perform a clear entry first if the last value is an operation before doing equals control", () => {
+      const output: Output = { parsed: ["1", "plus", "1", "times"], stringified: "1+1×" };
+      const result: Output = updateCalculator("equals", output);
+
+      expect(result.parsed).toEqual(["2"]);
+      expect(result.stringified).toBe("2");
+    });
+
+    it("should perform a clear entry first if the last value is a sign before doing equals control", () => {
+      const output: Output = { parsed: ["1", "plus", "1", "dividedBy", "negative"], stringified: "1+1÷-" };
+      const result: Output = updateCalculator("equals", output);
+
+      expect(result.parsed).toEqual(["2"]);
+      expect(result.stringified).toBe("2");
+    });
+
+    it("should disregard the decimal point if it is the last value in an equals control", () => {
+      const output: Output = { parsed: ["1", "plus", "1", "."], stringified: "1+1." };
+      const result: Output = updateCalculator("equals", output);
+
+      expect(result.parsed).toEqual(["2"]);
+      expect(result.stringified).toBe("2");
+    });
   });
 });
 
