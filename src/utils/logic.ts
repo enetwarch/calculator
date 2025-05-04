@@ -98,73 +98,48 @@ function calculateOutput(output: ParsedOutput): ParsedOutput {
     const MD: Operation[] = ["times", "dividedBy"];
     const AS: Operation[] = ["plus", "minus"];
 
-    const calculate = (precedence: Operation[], output: ParsedOutput): ParsedOutput => {
-      const operationIndex: number = output.findIndex((value) => {
-        if (!isOperation(value)) return false;
-        return precedence.includes(value);
-      });
-
-      if (operationIndex === -1) return output;
-
-      const calculated: ParsedOutput = calculateOperation(output, operationIndex);
-      return calculate(precedence, calculated);
-    };
-
-    const reducedMD: ParsedOutput = calculate(MD, output);
-    const reducedAD: ParsedOutput = calculate(AS, reducedMD);
+    const reducedMD: ParsedOutput = calculatePrecedence(MD, output);
+    const reducedAD: ParsedOutput = calculatePrecedence(AS, reducedMD);
 
     return reducedAD;
   })();
 
-  if (calculated.includes("Infinity") || calculated.includes("Error")) return calculated;
+  const edgeValues: Value[] = ["Infinity", "Error"];
+  if (calculated.find((value) => edgeValues.includes(value))) return calculated;
 
   const roundedCalculated: number = roundTerm(calculated);
   return parseOutput(roundedCalculated.toString());
+}
+
+function calculatePrecedence(precedence: Operation[], output: ParsedOutput): ParsedOutput {
+  const operationIndex: number = output.findIndex((value) => {
+    if (!isOperation(value)) return false;
+    return precedence.includes(value);
+  });
+
+  if (operationIndex === -1) return output;
+
+  const calculated: ParsedOutput = calculateOperation(output, operationIndex);
+  return calculatePrecedence(precedence, calculated);
 }
 
 /** @internal */
 export function calculateOperation(output: ParsedOutput, operationIndex: number): ParsedOutput {
   if (output.includes("Error")) return ["Error"];
 
-  const operationStartingIndex: number =
-    ((): number | undefined => {
-      for (let i = operationIndex - 1; i > 0; i--) {
-        const value: Value = output[i];
-        if (isOperation(value)) return i + 1;
-      }
-    })() || 0;
+  const operationStartingIndex: number = getOperationStartingIndex(operationIndex, output);
+  const operationEndingIndex: number = getOperationEndingIndex(operationIndex, output);
 
-  const operationEndingIndex: number =
-    ((): number | undefined => {
-      for (let i = operationIndex + 1; i < output.length; i++) {
-        const value: Value = output[i];
-        if (isOperation(value)) return i;
-      }
-    })() || output.length;
-
-  const x: number = ((): number => {
-    const start: number = operationStartingIndex;
-    const end: number = operationIndex;
-    return parseTerm(output, start, end);
-  })();
-
-  const y: number = ((): number => {
-    const start: number = operationIndex + 1;
-    const end: number = operationEndingIndex;
-    return parseTerm(output, start, end);
-  })();
+  const x: number = parseTerm(output, operationStartingIndex, operationIndex);
+  const y: number = parseTerm(output, operationIndex + 1, operationEndingIndex);
 
   const operation: Value = output[operationIndex];
-  const operationFunction: OperationFunction = ((): OperationFunction => {
-    if (isOperation(operation)) return operationFunctionMap[operation];
-    throw Error(`Not an operation: ${operation}`);
-  })();
+  if (!isOperation(operation)) throw Error(`Not an operation: ${operation}`);
+  const operationFunction: OperationFunction = operationFunctionMap[operation];
 
   const calculated: ParsedOutput = ((): ParsedOutput => {
     const result: number = operationFunction(x, y);
-    if (operation !== "dividedBy" || !Number.isNaN(result)) {
-      return parseOutput(result.toString());
-    }
+    if (!Number.isNaN(result)) return parseOutput(result.toString());
 
     return ["Error"];
   })();
@@ -176,23 +151,47 @@ export function calculateOperation(output: ParsedOutput, operationIndex: number)
   });
 }
 
+/** @internal */
+export function getOperationStartingIndex(operationIndex: number, output: ParsedOutput): number {
+  for (let i = operationIndex - 1; i > 0; i--) {
+    const value: Value = output[i];
+    if (isOperation(value)) return i + 1;
+  }
+
+  return 0;
+}
+
+/** @internal */
+export function getOperationEndingIndex(operationIndex: number, output: ParsedOutput): number {
+  for (let i = operationIndex + 1; i < output.length; i++) {
+    const value: Value = output[i];
+    if (isOperation(value)) return i;
+  }
+
+  return output.length;
+}
+
 const signLiterals = ["-"] as const;
 type SignLiteral = (typeof signLiterals)[number];
+
 const signLiteralMap: Record<Sign, SignLiteral> = Object.freeze({
   negative: "-",
 });
+
 const signSemanticMap: Record<SignLiteral, Sign> = Object.freeze({
   "-": "negative",
 });
 
 const operationLiterals = ["+", "-", "×", "÷"] as const;
 type OperationLiteral = (typeof operationLiterals)[number];
+
 const operationLiteralMap: Record<Operation, OperationLiteral> = Object.freeze({
   plus: "+",
   minus: "-",
   times: "×",
   dividedBy: "÷",
 });
+
 const operationSemanticMap: Record<OperationLiteral, Operation> = Object.freeze({
   "+": "plus",
   "-": "minus",

@@ -5,6 +5,8 @@ import {
   controlOutput,
   getLastTerm,
   getLastValue,
+  getOperationEndingIndex,
+  getOperationStartingIndex,
   insertInput,
   parseOutput,
   parseTerm,
@@ -215,6 +217,18 @@ describe(getLastTerm.name, () => {
   it("should return an empty array if the last term is empty", () => {
     expect(getLastTerm(["1", "plus"])).toEqual([]);
     expect(getLastTerm(["6", "9", "4", "2", "0", "dividedBy"])).toEqual([]);
+  });
+});
+
+describe(getOperationStartingIndex.name, () => {
+  it("should get the first inclusive index of the left hand term based on the operation index", () => {
+    expect(getOperationStartingIndex(3, ["1", "plus", "2", "times", "3"])).toBe(2);
+  });
+});
+
+describe(getOperationEndingIndex.name, () => {
+  it("should get the last exclusive index of the right hand term based on the operation index", () => {
+    expect(getOperationEndingIndex(3, ["1", "plus", "2", "times", "3"])).toBe(5);
   });
 });
 
