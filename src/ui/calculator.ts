@@ -32,6 +32,7 @@ export class Calculator implements CalculatorInterface {
 
     // biome-ignore lint/complexity/noForEach: One-liner side effect loop
     this._buttons.forEach((button) => button.initialize(this.handleAction.bind(this)));
+    this.updateOutputElement();
   }
 
   /** @public */

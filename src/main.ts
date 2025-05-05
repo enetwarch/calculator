@@ -6,12 +6,7 @@ import type { Output } from "@/utils/logic";
 
 window.addEventListener("load", () => {
   const storageKey: string = "output";
-
-  const output: Output = ((): Output => {
-    const storedOutput: string | null = localStorage.getItem(storageKey);
-    if (!storedOutput) return { parsed: [], stringified: "" };
-    return JSON.parse(storedOutput) as Output;
-  })();
+  const output: Output = Calculator.loadOutput(storageKey);
 
   const calculator: Calculator = new Calculator(output, "output", storageKey);
   calculator.initialize(buttonConfigList);
