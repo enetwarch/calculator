@@ -1,5 +1,7 @@
 import "@/style.css";
-import { initializeCalculator } from "@/controllers/calculator";
+
+import { Calculator } from "@/ui/calculator";
+import { buttonConfigList } from "@/ui/calculator/config";
 import type { Output } from "@/utils/logic";
 
 window.addEventListener("load", () => {
@@ -11,5 +13,10 @@ window.addEventListener("load", () => {
     return JSON.parse(storedOutput) as Output;
   })();
 
-  initializeCalculator(output, storageKey);
+  const calculator: Calculator = new Calculator(output, "output", storageKey);
+  calculator.initialize(buttonConfigList);
+
+  window.addEventListener("beforeunload", () => {
+    calculator.destroy();
+  });
 });
