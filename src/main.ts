@@ -1,7 +1,7 @@
 import "@/style.css";
 
 import { Calculator } from "@/ui/calculator";
-import { buttonConfigList } from "@/ui/calculator/config";
+import { buttonConfigList } from "@/ui/config";
 import type { Output } from "@/utils/logic";
 
 window.addEventListener("load", () => {
