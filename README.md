@@ -10,11 +10,6 @@ A simple calculator website that everyone has definitely not done yet. Just like
 > [!NOTE]
 > Dividing by 0 will either leave a negative or positive Infinity value. This value will be cleared after the next input. Additionally, dividing 0 by 0 will leave an Error value.
 
-### Resources
-
-* [**Font Awesome**](https://fontawesome.com/): Used for the icons.
-  * [Calculator](https://fontawesome.com/icons/calculator): Site favicon.
-
 ### License
 
 * [MIT License](LICENSE)
